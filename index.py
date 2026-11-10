@@ -1,5 +1,6 @@
 import io
 import os
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -12,10 +13,18 @@ REQUIRED_COLS = ["NIS", "Nama", "Kelas", "Alpa", "Menit_Terlambat", "Jumlah_Sank
 ACCESS_CODE = os.getenv("SIPRES_ACCESS_CODE", "").strip()
 
 
+BASE_DIR = Path(__file__).resolve().parent
+DASHBOARD_FILE = BASE_DIR / "public" / "index.html"
+
 @app.get("/")
 def home():
-    # Serve the SIPRES dashboard when visitors open the domain root.
-    return FileResponse("public/index.html", media_type="text/html")
+    # Use an absolute path because serverless working directories can differ.
+    if not DASHBOARD_FILE.is_file():
+        raise HTTPException(
+            status_code=500,
+            detail=f"Dashboard HTML tidak ditemukan pada lokasi: {DASHBOARD_FILE}"
+        )
+    return FileResponse(str(DASHBOARD_FILE), media_type="text/html")
 
 
 def check_access(x_access_code: str | None):
